@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ntando Computer - One-Click Website Deployment</title>
+    <meta name="description" content="Deploy HTML files and websites with one click to Render.com">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        .upload-zone.dragover {
+            border-color: #6366f1;
+            background-color: #f0f9ff;
+        }
+        .status-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+<script src="https://sites.super.myninja.ai/_assets/ninja-daytona-script.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <i class="fas fa-rocket text-indigo-600 text-2xl mr-2"></i>
+                        <h1 class="text-xl font-bold text-gray-900">Ntando Computer</h1>
+                    </div>
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
+                        <a href="#dashboard" class="nav-link border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Dashboard
+                        </a>
+                        <a href="#deploy" class="nav-link border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Deploy
+                        </a>
+                        <a href="#projects" class="nav-link border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Projects
+                        </a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <div class="relative">
+                        <button id="user-menu" class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <div class="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium">
+                                <span id="user-initial">U</span>
+                            </div>
+                        </button>
+                        <div id="user-dropdown" class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                            <div class="py-1">
+                                <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                <p class="text-gray-600">Deploy your websites with one click</p>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-indigo-100 rounded-lg p-3">
+                            <i class="fas fa-folder text-indigo-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Total Projects</p>
+                            <p class="text-2xl font-bold text-gray-900" id="total-projects">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                            <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Deployed</p>
+                            <p class="text-2xl font-bold text-gray-900" id="deployed-projects">0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3">
+                            <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">In Progress</p>
+                            <p class="text-2xl font-bold text-gray-900" id="pending-projects">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Deploy -->
+            <div class="bg-white rounded-lg shadow p-6 mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Deploy</h3>
+                <button onclick="showDeployView()" class="w-full gradient-bg text-white font-medium py-3 px-4 rounded-lg hover:opacity-90 transition">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Deploy New Website
+                </button>
+            </div>
+
+            <!-- Recent Projects -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900">Recent Projects</h3>
+                </div>
+                <div id="recent-projects" class="p-6">
+                    <p class="text-gray-500 text-center">No projects yet. Deploy your first website!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Deploy View -->
+        <div id="deploy-view" class="view hidden">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">Deploy Website</h2>
+                <p class="text-gray-600">Upload your HTML, CSS, and JavaScript files</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <form id="deploy-form">
+                    <div class="mb-6">
+                        <label for="project-name" class="block text-sm font-medium text-gray-700 mb-2">
+                            Project Name
+                        </label>
+                        <input type="text" id="project-name" name="projectName" required
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                               placeholder="My Awesome Website">
+                    </div>
+
+                    <div class="mb-6">
+                        <label for="project-description" class="block text-sm font-medium text-gray-700 mb-2">
+                            Description (Optional)
+                        </label>
+                        <textarea id="project-description" name="description" rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                  placeholder="Brief description of your project"></textarea>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Upload Files
+                        </label>
+                        <div id="upload-zone" class="upload-zone rounded-lg p-8 text-center cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-gray-600 mb-2">Drag and drop your files here or click to browse</p>
+                            <p class="text-sm text-gray-500">Supports HTML, CSS, JavaScript, and image files</p>
+                            <input type="file" id="file-input" multiple accept=".html,.css,.js,.json,.png,.jpg,.jpeg,.gif,.svg,.ico" class="hidden">
+                        </div>
+                        <div id="file-list" class="mt-4"></div>
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <button type="submit" id="deploy-btn" class="flex-1 gradient-bg text-white font-medium py-3 px-4 rounded-lg hover:opacity-90 transition disabled:opacity-50">
+                            <i class="fas fa-rocket mr-2"></i>
+                            Deploy Now
+                        </button>
+                        <button type="button" onclick="showDashboard()" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Deployment Progress -->
+            <div id="deployment-progress" class="hidden mt-8 bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Deployment Progress</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Status:</span>
+                        <span id="deployment-status" class="status-badge text-sm font-medium text-blue-600">Processing...</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progress-bar" class="gradient-bg h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div id="deployment-log" class="bg-gray-50 rounded p-3 text-sm text-gray-600 font-mono"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects View -->
+        <div id="projects-view" class="view hidden">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">All Projects</h2>
+                <p class="text-gray-600">Manage your deployed websites</p>
+            </div>
+
+            <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Projects will be loaded here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-center mb-4">
+                    <i class="fas fa-rocket text-indigo-600 text-3xl mr-2"></i>
+                    <h3 class="text-lg font-bold text-gray-900">Ntando Computer</h3>
+                </div>
+                <div id="login-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                        <input type="email" id="login-email" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="your@email.com">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="login-password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                    </div>
+                    <button onclick="login()" class="w-full gradient-bg text-white font-medium py-2 px-4 rounded-md hover:opacity-90 transition">
+                        Login
+                    </button>
+                </div>
+                <div class="mt-4 text-center">
+                    <button onclick="showRegister()" class="text-sm text-indigo-600 hover:text-indigo-500">
+                        Don't have an account? Sign up
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
