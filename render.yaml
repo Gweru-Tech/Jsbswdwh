@@ -4,69 +4,29 @@ services:
     name: ntando-computer
     env: node
     plan: free
-    buildCommand: "npm install && npx prisma generate && npx prisma migrate deploy"
+    buildCommand: "npm install && npm run db:generate"
     startCommand: "npm start"
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
-      - fromGroup: ntando-secrets
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ntando-computer-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PRISMA_GENERATE_DATAPROXY
+        value: false
+    healthCheckPath: /api/health
+    autoDeploy: true
 
   # PostgreSQL database
-  - type: pserv
-    name: ntando-database
-    env: postgres
+  - type: postgres
+    name: ntando-computer-db
     plan: free
+    ipAllowList: []
     databases:
       - name: ntando_computer
         user: ntando_user
-
-envVarGroups:
-  - name: ntando-secrets
-    envVars:
-      - key: DATABASE_URL
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: RENDER_API_KEY
-        sync: false
-      - key: GITHUB_TOKEN
-        sync: false
-
-# Automatic deploys from GitHub
-autoDeploy: true
-
-# Health check
-healthCheckPath: /api/health
-
-# Build and deployment optimization
-buildFilter:
-  paths:
-    - "!node_modules/**"
-    - "!.git/**"
-    - "!uploads/**"
-    - "!deployments/**"
-    - "!temp/**"
-
-# Scaling
-scaling:
-  minInstances: 1
-  maxInstances: 1
-  targetMemoryPercent: 80
-  targetCPUPercent: 80
-
-# Headers and security
-headers:
-  - path: "/*"
-    name: "X-Frame-Options"
-    value: "DENY"
-  - path: "/*"
-    name: "X-Content-Type-Options"
-    value: "nosniff"
-  - path: "/*"
-    name: "X-XSS-Protection"
-    value: "1; mode=block"
-  - path: "/*"
-    name: "Referrer-Policy"
-    value: "strict-origin-when-cross-origin"
