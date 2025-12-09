@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  projects   Project[]
+  deployments Deployment[]
+  
+  @@map("users")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  url         String?
+  status      String   @default("CREATED") // CREATED, UPLOADING, BUILDING, DEPLOYED, FAILED
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deployments Deployment[]
+  
+  @@map("projects")
+}
+
+model Deployment {
+  id          String    @id @default(cuid())
+  projectId   String
+  userId      String
+  status      String    @default("PENDING") // PENDING, PROCESSING, BUILDING, SUCCESS, FAILED
+  url         String?
+  error       String?
+  files       String?   // JSON string of uploaded files
+  commitHash  String?
+  buildLog    String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("deployments")
+}
+
+model DeploymentLog {
+  id          String   @id @default(cuid())
+  deploymentId String
+  level       String   // INFO, WARN, ERROR
+  message     String
+  timestamp   DateTime @default(now())
+  
+  @@map("deployment_logs")
+}
