@@ -1,0 +1,48 @@
+# Node modules
+node_modules
+npm-debug.log*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Upload directories
+uploads/*
+deployments/*
+temp/*
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+*.md
+
+# IDE files
+.vscode
+.idea
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Test files
+test
+tests
+__tests__
+*.test.js
+*.spec.js
+
+# Build output
+dist
+build
+.next
+
+# Prisma
+!prisma/schema.prisma
